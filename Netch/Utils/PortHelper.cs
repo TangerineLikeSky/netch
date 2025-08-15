@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.NetworkManagement.IpHelper;
 using Netch.Models;
+using System.Net;
 
 namespace Netch.Utils;
 
@@ -56,8 +57,20 @@ public static class PortHelper
                         if (row.dwOwningPid is 0 or 4)
                             continue;
 
-                        if (PInvoke.ntohs((ushort)row.dwLocalPort) == port)
-                            process.Add(Process.GetProcessById((int)row.dwOwningPid));
+#if false
+                            if (PInvoke.ntohs((ushort)row.dwLocalPort) == port)
+                                process.Add(Process.GetProcessById((int)row.dwOwningPid));
+#else
+                            short hostPort = IPAddress.NetworkToHostOrder((short)row.dwLocalPort);
+
+                            if (hostPort == port)
+                            {
+                                // 获取拥有该端口的进程
+                                int pid = (int)row.dwOwningPid;
+                                Process proc = Process.GetProcessById(pid);
+                                process.Add(proc);
+                            }
+#endif
                     }
                 }
 
